@@ -1,0 +1,42 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getAnthropicClient, MODELS } from "@/lib/ai/client";
+import { TOOLS } from "@/lib/ai/tools";
+import { ActivityExtractionSchema } from "@/lib/ai/schemas/analysis";
+import { buildLoggingPrompt } from "@/lib/ai/prompts/logging";
+import { getAllNodes } from "@/actions/nodes";
+
+export async function POST(req: NextRequest) {
+  try {
+    const { input } = await req.json();
+    const nodes = await getAllNodes();
+    const client = getAnthropicClient();
+
+    const message = await client.messages.create({
+      model: MODELS.fast,
+      max_tokens: 1024,
+      messages: [{ role: "user", content: buildLoggingPrompt(nodes, input) }],
+      tools: [TOOLS.extractActivity],
+      tool_choice: { type: "any" },
+    });
+
+    const toolUse = message.content.find((b) => b.type === "tool_use");
+    if (!toolUse || toolUse.type !== "tool_use") {
+      return NextResponse.json({ error: "No extraction" }, { status: 500 });
+    }
+
+    const parsed = ActivityExtractionSchema.safeParse(toolUse.input);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid extraction" }, { status: 500 });
+    }
+
+    // Find matching node
+    const nodeId = parsed.data.nodeId
+      ? nodes.find((n) => n.id === parsed.data.nodeId)?.id ?? null
+      : null;
+
+    return NextResponse.json({ extraction: parsed.data, nodeId });
+  } catch (err) {
+    console.error("Log API error:", err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
+}
