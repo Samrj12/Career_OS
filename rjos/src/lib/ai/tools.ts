@@ -126,6 +126,37 @@ export const TOOLS: Record<string, Anthropic.Tool> = {
     },
   },
 
+  generateWeeklyReport: {
+    name: "generate_weekly_report",
+    description: "Generate a structured weekly performance report with insights, strengths, weaknesses, and next-week recommendations.",
+    input_schema: {
+      type: "object",
+      properties: {
+        summary: { type: "string", description: "2-3 sentence overall weekly summary" },
+        strengths: {
+          type: "array",
+          maxItems: 5,
+          items: { type: "string" },
+          description: "What went well this week — specific, quantified where possible",
+        },
+        weaknesses: {
+          type: "array",
+          maxItems: 5,
+          items: { type: "string" },
+          description: "What needs improvement or was missed this week",
+        },
+        recommendations: {
+          type: "array",
+          maxItems: 5,
+          items: { type: "string" },
+          description: "Concrete, specific actions for next week",
+        },
+        focusArea: { type: "string", description: "The single most important focus for next week" },
+      },
+      required: ["summary", "strengths", "weaknesses", "recommendations", "focusArea"],
+    },
+  },
+
   analyzeReflection: {
     name: "analyze_reflection",
     description: "Analyze a daily reflection for burnout, motivation, confidence and productivity trends.",

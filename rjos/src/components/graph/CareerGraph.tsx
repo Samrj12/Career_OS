@@ -24,7 +24,7 @@ interface CareerGraphProps {
 }
 
 export function CareerGraph({ flowNodes, flowEdges, dbNodes }: CareerGraphProps) {
-  const [nodes, setNodes] = useState(flowNodes);
+  const [nodes] = useState(flowNodes);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
   const onNodeClick: NodeMouseHandler = useCallback(

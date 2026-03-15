@@ -13,7 +13,10 @@ export async function Greeting() {
     limit: 10,
   });
 
-  const quote = unusedQuotes[Math.floor(Math.random() * unusedQuotes.length)];
+  // Server Component — Date.now() runs once on the server, never during client re-render
+  // eslint-disable-next-line react-hooks/purity
+  const idx = Math.floor(Date.now() / 1000) % (unusedQuotes.length || 1);
+  const quote = unusedQuotes[idx];
 
   if (quote) {
     await db.update(quotes).set({ usedOn: today }).where(eq(quotes.id, quote.id));

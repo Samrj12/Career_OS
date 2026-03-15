@@ -54,7 +54,7 @@ export function ActivityLogClient({ nodes, recentActivities }: Props) {
         await saveActivity(data.extraction, data.nodeId);
         setSaved(true);
       }
-    } catch (e) {
+    } catch {
       setError("Failed to process your log. Please try again.");
     } finally {
       setIsLoading(false);

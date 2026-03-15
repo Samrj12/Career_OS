@@ -1,6 +1,4 @@
-import type { Node, NodeColor } from "@/db/schema";
-
-const DAY_MS = 86_400_000;
+import type { NodeColor } from "@/db/schema";
 
 /** Clamp a value between min and max */
 function clamp(value: number, min: number, max: number): number {

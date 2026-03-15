@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { activityLogs, nodes } from "@/db/schema";
 import type { ActivityExtraction } from "@/lib/ai/schemas/analysis";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, lt } from "drizzle-orm";
 import { recalculateNodeMetrics } from "./nodes";
 import { revalidatePath } from "next/cache";
 
@@ -14,6 +14,18 @@ export async function saveActivityLog(params: {
 }) {
   const { nodeId, rawInput, extraction } = params;
   const now = Date.now();
+
+  // Compute days since last activity BEFORE inserting the new log
+  let daysSinceLastActivity: number | null = null;
+  if (nodeId) {
+    const lastLog = await db.query.activityLogs.findFirst({
+      where: and(eq(activityLogs.nodeId, nodeId), lt(activityLogs.loggedAt, now)),
+      orderBy: (a, { desc }) => [desc(a.loggedAt)],
+    });
+    if (lastLog) {
+      daysSinceLastActivity = Math.floor((now - lastLog.loggedAt) / 86_400_000);
+    }
+  }
 
   const [log] = await db
     .insert(activityLogs)
@@ -64,7 +76,7 @@ export async function saveActivityLog(params: {
       ),
     });
 
-    await recalculateNodeMetrics(nodeId, recentLogs.length, previousLogs.length, 0);
+    await recalculateNodeMetrics(nodeId, recentLogs.length, previousLogs.length, daysSinceLastActivity);
   }
 
   revalidatePath("/");

@@ -1,13 +1,12 @@
 import type { Node } from "@/db/schema";
 
-interface GraphSummary {
-  goals: Array<{ title: string; progress: number; health: number; color: string }>;
-  activeHabits: Array<{ title: string; streak?: number }>;
-  recentActivity: string;
-  todayPlanStatus: string;
+interface SystemContext {
+  recentActivitySummary?: string;
+  todayPlanSummary?: string;
+  recentReflectionSummary?: string;
 }
 
-function buildGraphSummary(nodes: Node[]): GraphSummary {
+export function buildSystemPrompt(nodes: Node[], date: string, context: SystemContext = {}): string {
   const goals = nodes
     .filter((n) => n.type === "goal")
     .map((n) => ({
@@ -17,31 +16,39 @@ function buildGraphSummary(nodes: Node[]): GraphSummary {
       color: n.color,
     }));
 
+  const milestones = nodes
+    .filter((n) => n.type === "milestone" && n.status === "active")
+    .map((n) => ({
+      title: n.title,
+      progress: Math.round(n.progress * 100),
+      color: n.color,
+    }));
+
   const activeHabits = nodes
     .filter((n) => n.type === "habit" && n.status === "active")
     .slice(0, 5)
-    .map((n) => ({ title: n.title }));
+    .map((n) => n.title);
 
-  return {
-    goals,
-    activeHabits,
-    recentActivity: "No recent activity logged.",
-    todayPlanStatus: "No plan generated yet.",
-  };
-}
-
-export function buildSystemPrompt(nodes: Node[], date: string): string {
-  const summary = buildGraphSummary(nodes);
-
-  const goalsText = summary.goals.length
-    ? summary.goals
-        .map((g) => `  • ${g.title}: ${g.progress}% complete, health ${g.health}% (${g.color})`)
-        .join("\n")
+  const goalsText = goals.length
+    ? goals.map((g) => `  • ${g.title}: ${g.progress}% complete, health ${g.health}% (${g.color})`).join("\n")
     : "  • No goals defined yet.";
 
-  const habitsText = summary.activeHabits.length
-    ? summary.activeHabits.map((h) => `  • ${h.title}`).join("\n")
+  const milestonesText = milestones.length
+    ? milestones
+        .slice(0, 6)
+        .map((m) => `  • ${m.title}: ${m.progress}% (${m.color})`)
+        .join("\n")
+    : "  • No active milestones.";
+
+  const habitsText = activeHabits.length
+    ? activeHabits.map((h) => `  • ${h}`).join("\n")
     : "  • No active habits.";
+
+  const recentActivity = context.recentActivitySummary || "No recent activity logged.";
+  const todayPlan = context.todayPlanSummary || "No plan generated yet.";
+  const recentReflection = context.recentReflectionSummary
+    ? `\nRecent Reflection: ${context.recentReflectionSummary}`
+    : "";
 
   return `You are RJ-OS — the personal AI career coach for Rudraksh (RJ).
 
@@ -55,11 +62,14 @@ Today's date: ${date}
 Goals:
 ${goalsText}
 
+Active Milestones:
+${milestonesText}
+
 Active Habits:
 ${habitsText}
 
-Recent Activity: ${summary.recentActivity}
-Today's Plan: ${summary.todayPlanStatus}
+Recent Activity: ${recentActivity}
+Today's Plan: ${todayPlan}${recentReflection}
 
 ═══ COACHING PRINCIPLES ═══
 1. Never give generic advice. Always reference specific nodes, numbers, and trends.

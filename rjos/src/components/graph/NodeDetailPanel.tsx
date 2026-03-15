@@ -28,23 +28,23 @@ const COLOR_VARIANT: Record<string, "green" | "yellow" | "red" | "blue"> = {
   blue: "blue",
 };
 
+function momentumIcon(momentum: number) {
+  if (momentum > 0.2) return <TrendingUp className="h-4 w-4 text-green-400" />;
+  if (momentum < -0.2) return <TrendingDown className="h-4 w-4 text-red-400" />;
+  return <Minus className="h-4 w-4 text-yellow-400" />;
+}
+
+function momentumLabel(momentum: number) {
+  if (momentum > 0.5) return "High";
+  if (momentum > 0.2) return "Rising";
+  if (momentum > -0.2) return "Steady";
+  if (momentum > -0.5) return "Declining";
+  return "Stalled";
+}
+
 export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
   const progressPct = Math.round(node.progress * 100);
   const healthPct = Math.round(node.healthScore * 100);
-
-  function MomentumIcon() {
-    if (node.momentum > 0.2) return <TrendingUp className="h-4 w-4 text-green-400" />;
-    if (node.momentum < -0.2) return <TrendingDown className="h-4 w-4 text-red-400" />;
-    return <Minus className="h-4 w-4 text-yellow-400" />;
-  }
-
-  function momentumLabel() {
-    if (node.momentum > 0.5) return "High";
-    if (node.momentum > 0.2) return "Rising";
-    if (node.momentum > -0.2) return "Steady";
-    if (node.momentum > -0.5) return "Declining";
-    return "Stalled";
-  }
 
   return (
     <div className="w-80 h-full overflow-y-auto border-l border-[hsl(var(--border))] bg-[hsl(var(--background))] p-4 flex flex-col gap-4">
@@ -92,8 +92,8 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
         <div className="rounded-lg bg-[hsl(var(--muted))] p-3">
           <p className="text-xs text-[hsl(var(--muted-foreground))]">Momentum</p>
           <div className="mt-0.5 flex items-center gap-1">
-            <MomentumIcon />
-            <p className="text-sm font-semibold">{momentumLabel()}</p>
+            {momentumIcon(node.momentum)}
+            <p className="text-sm font-semibold">{momentumLabel(node.momentum)}</p>
           </div>
         </div>
         <div className="rounded-lg bg-[hsl(var(--muted))] p-3">

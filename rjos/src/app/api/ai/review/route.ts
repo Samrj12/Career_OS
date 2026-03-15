@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAnthropicClient, MODELS } from "@/lib/ai/client";
 import { buildWeeklyReviewPrompt } from "@/lib/ai/prompts/review";
+import { TOOLS } from "@/lib/ai/tools";
 import { db } from "@/db";
 import { activityLogs, habitLogs, reports } from "@/db/schema";
 import { gte } from "drizzle-orm";
@@ -30,9 +31,9 @@ export async function POST() {
       date: h.logDate,
     }));
 
-    const totalPlanned = 7;
-    const completedDays = new Set(weekActivities.map((a) => new Date(a.loggedAt).toISOString().split("T")[0])).size;
-    const planCompletionRate = completedDays / totalPlanned;
+    // Use actual active days in the week, not a hardcoded 7
+    const activeDays = new Set(weekActivities.map((a) => new Date(a.loggedAt).toISOString().split("T")[0])).size;
+    const planCompletionRate = activeDays / 7;
 
     const prompt = buildWeeklyReviewPrompt(
       { activityLogs: activityData, habitLogs: habitData, planCompletionRate },
@@ -41,15 +42,27 @@ export async function POST() {
     );
 
     const client = getAnthropicClient();
-    const message = await client.messages.create({
+    const response = await client.messages.create({
       model: MODELS.smart,
-      max_tokens: 2048,
+      max_tokens: 1024,
+      tools: [TOOLS.generateWeeklyReport],
+      tool_choice: { type: "any" },
       messages: [{ role: "user", content: prompt }],
     });
 
-    const text = message.content.find((b) => b.type === "text")?.text ?? "";
+    const toolUse = response.content.find((b) => b.type === "tool_use");
+    if (!toolUse || toolUse.type !== "tool_use") {
+      return NextResponse.json({ error: "AI did not return a structured report" }, { status: 500 });
+    }
 
-    // Parse AI response into structured sections
+    const reportData = toolUse.input as {
+      summary: string;
+      strengths: string[];
+      weaknesses: string[];
+      recommendations: string[];
+      focusArea: string;
+    };
+
     const totalHours = weekActivities.reduce((s, a) => s + (a.timeSpent || 0), 0) / 60;
     const habitCompletionRate = weekHabits.length
       ? weekHabits.filter((h) => h.completed === 1).length / weekHabits.length
@@ -59,24 +72,19 @@ export async function POST() {
       activeHours: Math.round(totalHours * 10) / 10,
       activitiesLogged: weekActivities.length,
       habitCompletionPct: Math.round(habitCompletionRate * 100),
-      activeDays: completedDays,
+      activeDays,
     };
-
-    // Simple section parsing
-    const strengths = extractListSection(text, ["strength", "went well", "strong"]);
-    const weaknesses = extractListSection(text, ["weakness", "missed", "needs work", "behind"]);
-    const recommendations = extractListSection(text, ["recommend", "next week", "should", "increase", "reduce"]);
 
     await db.insert(reports).values({
       id: crypto.randomUUID(),
       type: "weekly",
       periodStart: weekStart,
       periodEnd: now,
-      content: JSON.stringify({ text }),
+      content: JSON.stringify({ summary: reportData.summary, focusArea: reportData.focusArea }),
       stats: JSON.stringify(stats),
-      strengths: JSON.stringify(strengths),
-      weaknesses: JSON.stringify(weaknesses),
-      recommendations: JSON.stringify(recommendations),
+      strengths: JSON.stringify(reportData.strengths),
+      weaknesses: JSON.stringify(reportData.weaknesses),
+      recommendations: JSON.stringify(reportData.recommendations),
       createdAt: now,
     });
 
@@ -85,26 +93,4 @@ export async function POST() {
     console.error("Review generation error:", err);
     return NextResponse.json({ error: "Failed to generate review" }, { status: 500 });
   }
-}
-
-function extractListSection(text: string, keywords: string[]): string[] {
-  const lines = text.split("\n");
-  const results: string[] = [];
-  let inSection = false;
-
-  for (const line of lines) {
-    const lower = line.toLowerCase();
-    if (keywords.some((k) => lower.includes(k))) {
-      inSection = true;
-    }
-    if (inSection && (line.startsWith("-") || line.match(/^\d+\./))) {
-      const item = line.replace(/^[-\d.)\s]+/, "").trim();
-      if (item) results.push(item);
-    }
-    if (inSection && line.trim() === "" && results.length > 0) {
-      break;
-    }
-  }
-
-  return results.slice(0, 5);
 }

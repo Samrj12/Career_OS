@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { PlanItem } from "@/lib/ai/schemas/plan";
 import { Clock, CheckCircle2, Circle } from "lucide-react";
-import Link from "next/link";
+import { GeneratePlanButton } from "./GeneratePlanButton";
 
 export async function TodayPlan() {
   const plan = await getTodayPlan();
@@ -15,17 +15,20 @@ export async function TodayPlan() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold">Today&apos;s Plan</CardTitle>
-          {items.length > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {completedCount}/{items.length}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {items.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {completedCount}/{items.length}
+              </Badge>
+            )}
+            <GeneratePlanButton />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
         {items.length === 0 ? (
           <p className="text-xs text-[hsl(var(--muted-foreground))]">
-            No plan yet. <Link href="/log" className="underline">Log an activity</Link> to get a plan.
+            No plan yet — click &quot;Generate Plan&quot; to get today&apos;s AI plan.
           </p>
         ) : (
           items.slice(0, 5).map((item, i) => (
