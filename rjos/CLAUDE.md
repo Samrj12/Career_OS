@@ -3,7 +3,7 @@
 ## Quick Start
 ```bash
 npm install
-cp .env.example .env.local   # Add your ANTHROPIC_API_KEY
+cp .env.example .env.local   # Add your OPENAI_API_KEY
 mkdir -p data
 npx drizzle-kit push
 npx tsx src/db/seed.ts       # Seed quotes table
@@ -16,7 +16,7 @@ npm run dev
 - **React Flow** (`@xyflow/react`) + **dagre** — interactive career graph visualization
 - **shadcn/ui** + **Tailwind CSS** — UI components
 - **Recharts** — analytics charts (via shadcn Chart component)
-- **Claude API** (`@anthropic-ai/sdk`) — all AI features
+- **OpenAI API** (`openai`) — all AI features (gpt-4o / gpt-4o-mini)
 - **Web Speech API** — voice journaling (browser-native, Chrome only)
 
 ## Architecture

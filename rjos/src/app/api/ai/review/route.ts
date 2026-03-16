@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAnthropicClient, MODELS } from "@/lib/ai/client";
+import { getOpenAIClient, MODELS } from "@/lib/ai/client";
 import { buildWeeklyReviewPrompt } from "@/lib/ai/prompts/review";
 import { TOOLS } from "@/lib/ai/tools";
 import { db } from "@/db";
@@ -41,21 +41,21 @@ export async function POST() {
       new Date(now).toISOString().split("T")[0]
     );
 
-    const client = getAnthropicClient();
-    const response = await client.messages.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: MODELS.smart,
       max_tokens: 1024,
       tools: [TOOLS.generateWeeklyReport],
-      tool_choice: { type: "any" },
+      tool_choice: "required",
       messages: [{ role: "user", content: prompt }],
     });
 
-    const toolUse = response.content.find((b) => b.type === "tool_use");
-    if (!toolUse || toolUse.type !== "tool_use") {
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0];
+    if (!toolCall) {
       return NextResponse.json({ error: "AI did not return a structured report" }, { status: 500 });
     }
 
-    const reportData = toolUse.input as {
+    const reportData = JSON.parse(toolCall.function.arguments) as {
       summary: string;
       strengths: string[];
       weaknesses: string[];

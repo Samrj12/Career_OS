@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnthropicClient, MODELS } from "@/lib/ai/client";
+import { getOpenAIClient, MODELS } from "@/lib/ai/client";
 import { TOOLS } from "@/lib/ai/tools";
 import { buildOnboardingSystemPrompt } from "@/lib/ai/prompts/system";
 import { GeneratedGraphSchema } from "@/lib/ai/schemas/graph";
@@ -8,44 +8,54 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
 
-    const client = getAnthropicClient();
+    const client = getOpenAIClient();
 
-    const stream = await client.messages.stream({
+    const stream = await client.chat.completions.create({
       model: MODELS.smart,
       max_tokens: 4096,
-      system: buildOnboardingSystemPrompt(),
-      messages,
+      messages: [
+        { role: "system", content: buildOnboardingSystemPrompt() },
+        ...messages,
+      ],
       tools: [TOOLS.generateGraph],
+      tool_choice: "auto",
+      stream: true,
     });
 
-    // Return a streaming response
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          for await (const event of stream) {
-            if (
-              event.type === "content_block_delta" &&
-              event.delta.type === "text_delta"
-            ) {
+          let toolCallName = "";
+          let toolCallArgs = "";
+
+          for await (const chunk of stream) {
+            const delta = chunk.choices[0]?.delta;
+
+            if (delta?.content) {
               controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ type: "text", text: event.delta.text })}\n\n`)
+                encoder.encode(`data: ${JSON.stringify({ type: "text", text: delta.content })}\n\n`)
               );
             }
 
-            if (event.type === "content_block_stop") {
-              // Check if a tool was used (graph generation)
-              const message = await stream.finalMessage();
-              const toolUse = message.content.find((b) => b.type === "tool_use");
-              if (toolUse && toolUse.type === "tool_use" && toolUse.name === "generate_career_graph") {
-                const parsed = GeneratedGraphSchema.safeParse(toolUse.input);
-                if (parsed.success) {
-                  controller.enqueue(
-                    encoder.encode(
-                      `data: ${JSON.stringify({ type: "graph_generated", graph: parsed.data })}\n\n`
-                    )
-                  );
-                }
+            if (delta?.tool_calls) {
+              for (const tc of delta.tool_calls) {
+                if (tc.function?.name) toolCallName = tc.function.name;
+                if (tc.function?.arguments) toolCallArgs += tc.function.arguments;
+              }
+            }
+
+            if (
+              chunk.choices[0]?.finish_reason === "tool_calls" &&
+              toolCallName === "generate_career_graph"
+            ) {
+              const parsed = GeneratedGraphSchema.safeParse(JSON.parse(toolCallArgs));
+              if (parsed.success) {
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({ type: "graph_generated", graph: parsed.data })}\n\n`
+                  )
+                );
               }
             }
           }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnthropicClient, MODELS } from "@/lib/ai/client";
+import { getOpenAIClient, MODELS } from "@/lib/ai/client";
 import { TOOLS } from "@/lib/ai/tools";
 import { ActivityExtractionSchema } from "@/lib/ai/schemas/analysis";
 import { buildLoggingPrompt } from "@/lib/ai/prompts/logging";
@@ -9,22 +9,22 @@ export async function POST(req: NextRequest) {
   try {
     const { input } = await req.json();
     const nodes = await getAllNodes();
-    const client = getAnthropicClient();
+    const client = getOpenAIClient();
 
-    const message = await client.messages.create({
+    const response = await client.chat.completions.create({
       model: MODELS.fast,
       max_tokens: 1024,
       messages: [{ role: "user", content: buildLoggingPrompt(nodes, input) }],
       tools: [TOOLS.extractActivity],
-      tool_choice: { type: "any" },
+      tool_choice: "required",
     });
 
-    const toolUse = message.content.find((b) => b.type === "tool_use");
-    if (!toolUse || toolUse.type !== "tool_use") {
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0];
+    if (!toolCall) {
       return NextResponse.json({ error: "No extraction" }, { status: 500 });
     }
 
-    const parsed = ActivityExtractionSchema.safeParse(toolUse.input);
+    const parsed = ActivityExtractionSchema.safeParse(JSON.parse(toolCall.function.arguments));
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid extraction" }, { status: 500 });
     }

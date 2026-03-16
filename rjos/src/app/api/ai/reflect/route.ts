@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnthropicClient, MODELS } from "@/lib/ai/client";
+import { getOpenAIClient, MODELS } from "@/lib/ai/client";
 import { TOOLS } from "@/lib/ai/tools";
 import { ReflectionAnalysisSchema } from "@/lib/ai/schemas/analysis";
 import { buildReflectionPrompt } from "@/lib/ai/prompts/reflection";
@@ -10,22 +10,22 @@ export async function POST(req: NextRequest) {
   try {
     const { content } = await req.json();
     const today = new Date().toISOString().split("T")[0];
-    const client = getAnthropicClient();
+    const client = getOpenAIClient();
 
-    const message = await client.messages.create({
+    const response = await client.chat.completions.create({
       model: MODELS.smart,
       max_tokens: 1024,
       messages: [{ role: "user", content: buildReflectionPrompt(content, today) }],
       tools: [TOOLS.analyzeReflection],
-      tool_choice: { type: "any" },
+      tool_choice: "required",
     });
 
-    const toolUse = message.content.find((b) => b.type === "tool_use");
-    if (!toolUse || toolUse.type !== "tool_use") {
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0];
+    if (!toolCall) {
       return NextResponse.json({ error: "No analysis" }, { status: 500 });
     }
 
-    const parsed = ReflectionAnalysisSchema.safeParse(toolUse.input);
+    const parsed = ReflectionAnalysisSchema.safeParse(JSON.parse(toolCall.function.arguments));
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid analysis" }, { status: 500 });
     }

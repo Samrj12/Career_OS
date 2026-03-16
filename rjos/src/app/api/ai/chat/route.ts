@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnthropicClient, MODELS } from "@/lib/ai/client";
+import { getOpenAIClient, MODELS } from "@/lib/ai/client";
 import { buildSystemPrompt } from "@/lib/ai/prompts/system";
 import { getAllNodes } from "@/actions/nodes";
 import { getRecentActivities } from "@/actions/activities";
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
 
-    const client = getAnthropicClient();
+    const client = getOpenAIClient();
     const today = new Date().toISOString().split("T")[0];
 
     const [allNodes, recentActivities, todayPlan, latestReflection] = await Promise.all([
@@ -54,28 +54,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const stream = await client.messages.stream({
+    const systemPrompt = buildSystemPrompt(allNodes, today, {
+      recentActivitySummary,
+      todayPlanSummary,
+      recentReflectionSummary,
+    });
+
+    const stream = await client.chat.completions.create({
       model: MODELS.smart,
       max_tokens: 2048,
-      system: buildSystemPrompt(allNodes, today, {
-        recentActivitySummary,
-        todayPlanSummary,
-        recentReflectionSummary,
-      }),
-      messages,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...messages,
+      ],
+      stream: true,
     });
 
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          for await (const event of stream) {
-            if (
-              event.type === "content_block_delta" &&
-              event.delta.type === "text_delta"
-            ) {
+          for await (const chunk of stream) {
+            const text = chunk.choices[0]?.delta?.content;
+            if (text) {
               controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`)
+                encoder.encode(`data: ${JSON.stringify({ text })}\n\n`)
               );
             }
           }

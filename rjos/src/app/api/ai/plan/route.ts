@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAnthropicClient, MODELS } from "@/lib/ai/client";
+import { getOpenAIClient, MODELS } from "@/lib/ai/client";
 import { buildPlanningPrompt } from "@/lib/ai/prompts/planning";
 import { TOOLS } from "@/lib/ai/tools";
 import { savePlan } from "@/actions/plans";
@@ -38,21 +38,21 @@ export async function POST() {
     const today = todayISO();
     const prompt = buildPlanningPrompt(allNodes, today, availableHours, activitySummary);
 
-    const client = getAnthropicClient();
-    const response = await client.messages.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: MODELS.smart,
       max_tokens: 1024,
       tools: [TOOLS.generateDailyPlan],
-      tool_choice: { type: "any" },
+      tool_choice: "required",
       messages: [{ role: "user", content: prompt }],
     });
 
-    const toolUse = response.content.find((b) => b.type === "tool_use");
-    if (!toolUse || toolUse.type !== "tool_use") {
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0];
+    if (!toolCall) {
       return NextResponse.json({ error: "AI did not return a plan" }, { status: 500 });
     }
 
-    const plan = await savePlan("daily", today, toolUse.input as GeneratedPlan);
+    const plan = await savePlan("daily", today, JSON.parse(toolCall.function.arguments) as GeneratedPlan);
     return NextResponse.json({ success: true, plan });
   } catch (err) {
     console.error("Plan generation error:", err);
