@@ -1,8 +1,6 @@
 import { db } from "@/db";
 import { reports } from "@/db/schema";
 import { desc } from "drizzle-orm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils/dates";
 import { GenerateReviewButton } from "@/components/GenerateReviewButton";
 
@@ -11,30 +9,41 @@ export default async function ReviewPage() {
     orderBy: [desc(reports.createdAt)],
   });
 
+  const periodStart = latestReport ? formatDate(latestReport.periodStart) : "This Week";
+  const periodEnd = latestReport ? formatDate(latestReport.periodEnd) : "";
+
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-      <div className="flex items-start justify-between">
+    <div className="max-w-[800px] mx-auto p-8 animate-fade-slide-up">
+      <div className="flex items-start justify-between mb-[28px]">
         <div>
-          <h1 className="text-2xl font-bold">Weekly Review</h1>
-          <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-            AI-generated analysis of your week&apos;s performance.
+          {/* "WEEKLY REVIEW" stamped header */}
+          <div className="inline-block mb-3 px-3 py-1.5 border-[2px] border-double border-[var(--amber)] opacity-80 -rotate-[3deg]">
+            <span className="font-[family-name:var(--font-geist-mono)] text-[11px] uppercase tracking-[0.15em] text-[var(--amber)]">
+              WEEKLY REVIEW
+            </span>
+          </div>
+          <p className="font-[family-name:var(--font-playfair)] text-[24px] text-[var(--ink)]">
+            {latestReport ? `${periodStart} — ${periodEnd}` : 'Ready for review?'}
           </p>
         </div>
-        <GenerateReviewButton />
+        {latestReport && <GenerateReviewButton />}
       </div>
 
       {latestReport ? (
         <ReportView report={latestReport} />
       ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 space-y-3">
-            <p className="text-4xl">📊</p>
-            <p className="font-medium">No review yet</p>
-            <p className="text-sm text-[hsl(var(--muted-foreground))] text-center max-w-sm">
-              After a week of logging activities, generate your first weekly review.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="relative bg-[var(--paper)] border border-[var(--border)] rounded-[2px] shadow-[var(--shadow-card)] p-[40px] flex flex-col items-center justify-center space-y-4 min-h-[300px] overflow-hidden">
+          {/* Folded map at 15% opacity */}
+          <img
+            src="/assets/maps/maps (2).png"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover opacity-[0.15] pointer-events-none select-none grayscale"
+          />
+          <div className="relative z-10 text-center">
+            <p className="font-[family-name:var(--font-inter)] text-[15px] font-medium text-[var(--ink)] mb-6">Generate your first briefing</p>
+            <GenerateReviewButton isFirst={true} />
+          </div>
+        </div>
       )}
     </div>
   );
@@ -46,78 +55,115 @@ function ReportView({ report }: { report: typeof reports.$inferSelect }) {
   const weaknesses: string[] = JSON.parse(report.weaknesses || "[]");
   const recommendations: string[] = JSON.parse(report.recommendations || "[]");
 
+  const statEntries = Object.entries(stats);
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-        <span>{formatDate(report.periodStart)} — {formatDate(report.periodEnd)}</span>
-        <Badge variant="secondary">Week {getWeekNumber(report.periodStart)}</Badge>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {Object.entries(stats).map(([key, value]) => (
-          <Card key={key}>
-            <CardContent className="pt-4 text-center">
-              <p className="text-2xl font-bold">{value}</p>
-              <p className="text-xs text-[hsl(var(--muted-foreground))] capitalize mt-0.5">
-                {key.replace(/([A-Z])/g, " $1").toLowerCase()}
+    <div className="flex flex-col gap-[16px]">
+      {/* Stats — Playfair numbers, binder clip at top */}
+      {statEntries.length > 0 && (
+        <div className="flex flex-row flex-wrap sm:grid sm:grid-cols-4 gap-[16px]">
+          {statEntries.map(([key, value], i) => (
+            <div key={key} className="relative bg-[var(--paper)] border border-[var(--border)] rounded-[2px] shadow-[var(--shadow-card)] p-[20px] flex-1 min-w-[140px]">
+              {/* Binder clip on first card */}
+              {i === 0 && (
+                <img
+                  src="/assets/stationary_elements/IZtPd7BuOJHldUCqNnSSAp9sA.png"
+                  alt=""
+                  className="absolute -top-4 left-1/2 -translate-x-1/2 w-[28px] h-auto pointer-events-none select-none"
+                />
+              )}
+              <p className="font-[family-name:var(--font-playfair)] text-[40px] text-[var(--ink)] leading-none">{value}</p>
+              <p className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase text-[var(--ink-3)] tracking-[0.05em] mt-[4px]">
+                {key.replace(/([A-Z])/g, " $1").trim()}
               </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* Strengths & Weaknesses */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">💪 Strengths</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
+      {/* Strengths — blue pushpin header, green left border, green sticker badge numbering */}
+      {strengths.length > 0 && (
+        <div className="bg-[var(--paper)] border border-[var(--border)] rounded-[2px] shadow-[var(--shadow-card)] p-[20px]">
+          <div className="flex items-center gap-2 border-b border-dashed border-[var(--border)] pb-[8px] mb-[12px]">
+            <img
+              src="/assets/stationary_elements/8dV3aCqzCVySc1GF1CYVK0gQcQI.png"
+              alt=""
+              className="w-[14px] h-[14px]"
+            />
+            <span className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase text-[var(--ink-3)] tracking-[0.1em]">
+              STRENGTHS
+            </span>
+          </div>
+          <div className="flex flex-col gap-[8px]">
             {strengths.map((s, i) => (
-              <p key={i} className="text-xs flex gap-1.5">
-                <span className="text-green-400">✓</span> {s}
-              </p>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">🔧 Needs Work</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {weaknesses.map((w, i) => (
-              <p key={i} className="text-xs flex gap-1.5">
-                <span className="text-yellow-400">→</span> {w}
-              </p>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recommendations */}
-      {recommendations.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">🎯 Next Week Recommendations</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {recommendations.map((r, i) => (
-              <div key={i} className="flex gap-2">
-                <span className="text-[hsl(var(--primary))] font-bold text-sm">{i + 1}.</span>
-                <p className="text-sm">{r}</p>
+              <div key={i} className="border-l-[3px] border-[var(--green)] pl-[12px] flex items-start gap-3">
+                <span className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-[var(--green-bg)] font-[family-name:var(--font-geist-mono)] text-[9px] text-[var(--green)] font-bold shrink-0 mt-0.5">
+                  {i + 1}
+                </span>
+                <p className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink)] leading-relaxed">{s}</p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Weaknesses — orange pushpin header, amber left border, dashed border */}
+      {weaknesses.length > 0 && (
+        <div className="bg-[var(--paper)] border border-dashed border-[var(--border-dark)] rounded-[2px] shadow-[var(--shadow-card)] p-[20px]">
+          <div className="flex items-center gap-2 border-b border-dashed border-[var(--border)] pb-[8px] mb-[12px]">
+            <img
+              src="/assets/stationary_elements/Effx968261ztSs30esQUEHvmIsM (1).png"
+              alt=""
+              className="w-[14px] h-[14px]"
+            />
+            <span className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase text-[var(--ink-3)] tracking-[0.1em]">
+              WEAKNESSES
+            </span>
+          </div>
+          <div className="flex flex-col gap-[8px]">
+            {weaknesses.map((w, i) => (
+              <div key={i} className="border-l-[3px] border-[var(--amber)] pl-[12px]">
+                <p className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink)] leading-relaxed">{w}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recommendations — purple pushpin header, individually rotated cards with pushpins */}
+      {recommendations.length > 0 && (
+        <div className="bg-[var(--paper)] border border-[var(--border)] rounded-[2px] shadow-[var(--shadow-card)] p-[20px]">
+          <div className="flex items-center gap-2 border-b border-dashed border-[var(--border)] pb-[8px] mb-[12px]">
+            <div className="w-[14px] h-[14px] rounded-full bg-[var(--pin-purple)]" />
+            <span className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase text-[var(--ink-3)] tracking-[0.1em]">
+              RECOMMENDATIONS
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
+            {/* Dashed route lines connecting cards */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none select-none opacity-20 hidden sm:block" preserveAspectRatio="none">
+              <line x1="50%" y1="0" x2="50%" y2="100%" stroke="var(--border-dark)" strokeWidth="1.5" strokeDasharray="6 4" />
+            </svg>
+            {recommendations.map((r, i) => {
+              const rotations = [0.8, -0.5, 1, -0.8];
+              return (
+                <div
+                  key={i}
+                  className="relative bg-[var(--paper)] border border-[var(--border)] rounded-[2px] shadow-[var(--shadow-card)] p-4 pt-6"
+                  style={{ transform: `rotate(${rotations[i % rotations.length]}deg)` }}
+                >
+                  <img
+                    src="/assets/stationary_elements/8dV3aCqzCVySc1GF1CYVK0gQcQI.png"
+                    alt=""
+                    className="absolute -top-2 left-3 w-[14px] h-auto pointer-events-none select-none"
+                  />
+                  <p className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink)] leading-relaxed">{r}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );
-}
-
-function getWeekNumber(timestamp: number): number {
-  const d = new Date(timestamp);
-  const oneJan = new Date(d.getFullYear(), 0, 1);
-  return Math.ceil((((d.getTime() - oneJan.getTime()) / 86400000) + oneJan.getDay() + 1) / 7);
 }

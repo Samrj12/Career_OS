@@ -1,13 +1,18 @@
 import { ReflectClient } from "@/components/ReflectClient";
 
 export default function ReflectPage() {
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Daily Reflection</h1>
-        <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-          How did today go? Share your thoughts — I&apos;ll analyze trends and give you insights.
+    <div className="max-w-[640px] mx-auto p-8 animate-fade-slide-up">
+      <div className="mb-[20px] relative">
+        <h1 className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase text-[var(--ink-3)] tracking-[0.12em] mb-2">Daily Reflection</h1>
+        <p className="font-[family-name:var(--font-playfair)] text-[24px] text-[var(--ink)]">
+          {today}
         </p>
+        {/* Dashed SVG flourish under date */}
+        <svg className="mt-2 w-[120px] h-[6px] opacity-40" viewBox="0 0 120 6">
+          <path d="M0 3 Q 30 0, 60 3 T 120 3" fill="none" stroke="var(--border-dark)" strokeWidth="1.5" strokeDasharray="4 3" />
+        </svg>
       </div>
       <ReflectClient />
     </div>

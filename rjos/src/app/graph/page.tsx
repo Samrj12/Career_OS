@@ -8,17 +8,17 @@ export default async function GraphPage() {
 
   if (dbNodes.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-[hsl(var(--muted-foreground))]">
+      <div className="flex h-full items-center justify-center text-[var(--ink-3)]">
         <div className="text-center space-y-2">
-          <p className="text-lg font-medium">No career graph yet</p>
-          <p className="text-sm">Complete onboarding to generate your career graph.</p>
+          <p className="font-[family-name:var(--font-playfair)] text-lg font-medium text-[var(--ink)]">No career graph yet</p>
+          <p className="font-[family-name:var(--font-inter)] text-sm text-[var(--ink-3)]">Complete onboarding to generate your career graph.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="h-[calc(100vh-56px)] w-full relative">
       <CareerGraph
         flowNodes={flowNodes}
         flowEdges={flowEdges}

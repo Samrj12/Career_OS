@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { SidebarNav } from "@/components/SidebarNav";
+import TopNav from "@/components/TopNav";
 import { isOnboardingComplete } from "@/actions/onboarding";
 
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
   subsets: ["latin"],
 });
 
@@ -28,16 +32,16 @@ export default async function RootLayout({
   const onboarded = await isOnboardingComplete();
 
   return (
-    <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en">
+      <body className={`${inter.variable} ${playfair.variable} ${geistMono.variable} antialiased selection:bg-black selection:text-white`}>
         {!onboarded ? (
-          // Onboarding: full screen, no sidebar
-          <OnboardingGate>{children}</OnboardingGate>
+          <div className="min-h-screen">
+            {children}
+          </div>
         ) : (
-          // Main app: sidebar + content
-          <div className="flex h-screen overflow-hidden bg-[hsl(var(--background))]">
-            <SidebarNav />
-            <main className="flex-1 overflow-y-auto">
+          <div className="min-h-screen">
+            <TopNav />
+            <main className="pt-[56px]">
               {children}
             </main>
           </div>
@@ -47,7 +51,6 @@ export default async function RootLayout({
   );
 }
 
-// Simple gate: if not onboarded and not on /onboarding, redirect
 async function OnboardingGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

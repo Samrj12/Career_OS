@@ -9,11 +9,11 @@ export default async function LogPage() {
   ]);
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Log Activity</h1>
-        <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-          Tell me what you worked on today. I&apos;ll extract the details and update your graph.
+    <div className="max-w-[680px] mx-auto p-8 animate-fade-slide-up">
+      <div className="mb-[28px]">
+        <h1 className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase text-[var(--ink-3)] tracking-[0.12em] mb-2">Log Activity</h1>
+        <p className="font-[family-name:var(--font-playfair)] text-[28px] text-[var(--ink)]">
+          What did you work on?
         </p>
       </div>
       <ActivityLogClient nodes={nodes} recentActivities={recentActivities} />
