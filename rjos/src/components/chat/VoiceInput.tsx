@@ -10,7 +10,6 @@ interface VoiceInputProps {
   disabled?: boolean;
 }
 
-// Browser SpeechRecognition types
 interface ISpeechRecognition extends EventTarget {
   lang: string;
   continuous: boolean;
@@ -90,12 +89,15 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
   return (
     <Button
       type="button"
-      variant={isRecording ? "destructive" : "outline"}
+      variant="outline"
       size="icon"
       disabled={disabled}
       onClick={isRecording ? stopRecording : startRecording}
       title={isRecording ? "Stop recording" : "Start voice input"}
-      className={cn(isRecording && "animate-pulse")}
+      className={cn(
+        "shrink-0",
+        isRecording && "animate-pulse !bg-[var(--red-bg)] !text-[var(--red)] !border-[var(--red)]"
+      )}
     >
       {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
     </Button>

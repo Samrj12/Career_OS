@@ -40,7 +40,6 @@ export function ChatInterface({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent]);
 
-  // Auto-trigger first AI message on mount if no initial message
   useEffect(() => {
     if (!initialMessage && messages.length === 0) {
       sendMessage("", true);
@@ -137,9 +136,9 @@ export function ChatInterface({
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col font-inter">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 p-4">
+      <div className="flex-1 overflow-y-auto space-y-4 p-4 scrollbar-thin">
         {messages.map((msg, i) => (
           <MessageBubble key={i} role={msg.role} content={msg.content} />
         ))}
@@ -147,15 +146,18 @@ export function ChatInterface({
           <MessageBubble role="assistant" content={streamingContent} isStreaming />
         )}
         {isLoading && !streamingContent && (
-          <div className="flex justify-start">
-            <div className="bg-[hsl(var(--muted))] rounded-2xl rounded-bl-sm px-4 py-3">
-              <div className="flex gap-1">
+          <div className="flex justify-start mb-4">
+            <div className="bg-[#F8FBFF] rounded-[2px] border border-[var(--border)] shadow-[var(--shadow-card)] px-4 py-3">
+              {/* Typewriter-style dashes */}
+              <div className="flex gap-1.5 items-center h-[20px]">
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
-                    className="h-2 w-2 rounded-full bg-[hsl(var(--muted-foreground))] animate-bounce"
-                    style={{ animationDelay: `${i * 0.15}s` }}
-                  />
+                    className="font-[family-name:var(--font-geist-mono)] text-[var(--ink-3)] text-lg animate-pulse"
+                    style={{ animationDelay: `${i * 0.3}s` }}
+                  >
+                    —
+                  </span>
                 ))}
               </div>
             </div>
@@ -165,8 +167,8 @@ export function ChatInterface({
       </div>
 
       {/* Input */}
-      <div className="border-t border-[hsl(var(--border))] p-4">
-        <div className="flex gap-2 items-end">
+      <div className="p-4 pt-2">
+        <div className="flex gap-3 items-end">
           <textarea
             ref={textareaRef}
             value={input}
@@ -175,7 +177,7 @@ export function ChatInterface({
             placeholder={placeholder}
             disabled={isLoading}
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--ring))] disabled:opacity-50 min-h-[38px] max-h-32 overflow-y-auto"
+            className="flex-1 resize-none bg-transparent border-b-2 border-t-0 border-x-0 border-[var(--border-dark)] rounded-none px-2 py-2 text-[var(--ink)] placeholder:text-[var(--ink-3)] focus:outline-none focus:border-b-[var(--amber)] focus:ring-0 disabled:opacity-50 min-h-[38px] max-h-32 overflow-y-auto font-inter text-base transition-colors"
             style={{ height: "auto" }}
             onInput={(e) => {
               const t = e.currentTarget;
@@ -191,13 +193,14 @@ export function ChatInterface({
           )}
           <Button
             size="icon"
+            variant="default"
             disabled={isLoading || !input.trim()}
             onClick={() => sendMessage(input)}
           >
             <Send className="h-4 w-4" />
           </Button>
         </div>
-        <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
+        <p className="mt-2 font-[family-name:var(--font-geist-mono)] text-[10px] text-[var(--ink-3)]">
           Enter to send · Shift+Enter for new line
         </p>
       </div>
