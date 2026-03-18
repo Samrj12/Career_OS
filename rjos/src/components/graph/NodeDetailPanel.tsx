@@ -1,11 +1,9 @@
 "use client";
 
-import { X, TrendingUp, TrendingDown, Minus, Target, Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { X } from "lucide-react";
 import { formatProgress, healthLabel } from "@/lib/graph/calculations";
 import { formatDate, formatRelative } from "@/lib/utils/dates";
+import { Progress } from "@/components/ui/progress";
 import type { Node } from "@/db/schema";
 
 interface NodeDetailPanelProps {
@@ -13,115 +11,79 @@ interface NodeDetailPanelProps {
   onClose: () => void;
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  goal: "Goal",
-  milestone: "Milestone",
-  skill: "Skill",
-  habit: "Habit",
-  task: "Task",
-};
-
-const COLOR_VARIANT: Record<string, "green" | "yellow" | "red" | "blue"> = {
-  green: "green",
-  yellow: "yellow",
-  red: "red",
-  blue: "blue",
-};
-
-function momentumIcon(momentum: number) {
-  if (momentum > 0.2) return <TrendingUp className="h-4 w-4 text-green-400" />;
-  if (momentum < -0.2) return <TrendingDown className="h-4 w-4 text-red-400" />;
-  return <Minus className="h-4 w-4 text-yellow-400" />;
-}
-
-function momentumLabel(momentum: number) {
-  if (momentum > 0.5) return "High";
-  if (momentum > 0.2) return "Rising";
-  if (momentum > -0.2) return "Steady";
-  if (momentum > -0.5) return "Declining";
-  return "Stalled";
-}
-
 export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
   const progressPct = Math.round(node.progress * 100);
   const healthPct = Math.round(node.healthScore * 100);
 
   return (
-    <div className="w-80 h-full overflow-y-auto border-l border-[hsl(var(--border))] bg-[hsl(var(--background))] p-4 flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={COLOR_VARIANT[node.color] ?? "default"}>
-              {TYPE_LABELS[node.type] ?? node.type}
-            </Badge>
-            <Badge variant={COLOR_VARIANT[node.color] ?? "default"}>
-              {node.color === "blue" ? "Completed" : node.color === "green" ? "On Track" : node.color === "yellow" ? "Needs Attention" : "Behind"}
-            </Badge>
-          </div>
-          <h2 className="mt-2 text-base font-semibold leading-tight break-words">{node.title}</h2>
-          {node.description && (
-            <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">{node.description}</p>
-          )}
-        </div>
-        <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
-          <X className="h-4 w-4" />
-        </Button>
+    <div className="absolute right-0 top-0 h-full w-[320px] bg-[var(--paper)] border-l-[2px] border-[var(--border)] shadow-[-6px_0_16px_rgba(0,0,0,0.06)] p-[24px] flex flex-col gap-6 overflow-y-auto z-10 animate-fade-slide-up">
+      {/* Notebook spiral binding on left edge */}
+      <div className="absolute left-0 top-0 bottom-0 w-[12px] flex flex-col justify-start pt-6 gap-[14px] pointer-events-none">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div key={i} className="w-[10px] h-[10px] rounded-full border-2 border-[var(--border-dark)] bg-[var(--paper-alt)] mx-auto" />
+        ))}
       </div>
 
-      {/* Progress */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-xs">
-          <span className="text-[hsl(var(--muted-foreground))]">Progress</span>
-          <span className="font-medium">
+      <div className="flex flex-row items-start justify-between pl-4">
+        <div className="flex flex-col items-start gap-2">
+          <div className="font-[family-name:var(--font-geist-mono)] text-[9px] uppercase px-[8px] py-[2px] rounded-full font-bold bg-[var(--paper-alt)] text-[var(--ink-2)]">
+            {node.type}
+          </div>
+          <h2 className="font-[family-name:var(--font-playfair)] text-[20px] text-[var(--ink)] leading-tight break-words">
+            {node.title}
+          </h2>
+        </div>
+        <button onClick={onClose} className="text-[var(--ink-3)] hover:text-[var(--ink)] transition-colors mt-[-4px] mr-[-4px] p-1">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {node.description && (
+        <p className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink-2)] pl-4">
+          {node.description}
+        </p>
+      )}
+
+      {/* Progress — route tracker */}
+      <div className="flex flex-col gap-1.5 pl-4">
+        <div className="flex justify-between font-[family-name:var(--font-geist-mono)] text-[11px] text-[var(--ink-3)]">
+          <span>PROGRESS</span>
+          <span className="text-[var(--ink)]">
             {node.targetValue != null
               ? `${node.currentValue ?? 0} / ${node.targetValue}`
               : formatProgress(node.progress)}
           </span>
         </div>
-        <Progress value={progressPct} className="h-2" />
+        <Progress value={progressPct} />
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-lg bg-[hsl(var(--muted))] p-3">
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">Health</p>
-          <p className="mt-0.5 text-sm font-semibold">{healthLabel(node.healthScore)}</p>
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">{healthPct}%</p>
-        </div>
-        <div className="rounded-lg bg-[hsl(var(--muted))] p-3">
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">Momentum</p>
-          <div className="mt-0.5 flex items-center gap-1">
-            {momentumIcon(node.momentum)}
-            <p className="text-sm font-semibold">{momentumLabel(node.momentum)}</p>
+      {/* Stats grid — dashed-bordered stamped boxes */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-0 pl-4">
+        {[
+          { label: "Health", value: `${healthPct}%` },
+          { label: "Momentum", value: node.momentum > 0.2 ? "High" : node.momentum < -0.2 ? "Low" : "Steady" },
+          { label: "Importance", value: `${node.importance}/10` },
+          { label: "Confidence", value: `${Math.round(node.confidence * 100)}%` },
+        ].map((stat) => (
+          <div key={stat.label} className="py-[12px] border-b border-dashed border-[var(--border)] flex flex-col">
+            <span className="font-[family-name:var(--font-geist-mono)] text-[9px] uppercase text-[var(--ink-3)] mb-1">{stat.label}</span>
+            <span className="font-[family-name:var(--font-inter)] text-[18px] font-semibold text-[var(--ink)] leading-tight">{stat.value}</span>
           </div>
-        </div>
-        <div className="rounded-lg bg-[hsl(var(--muted))] p-3">
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">Importance</p>
-          <p className="mt-0.5 text-sm font-semibold">{node.importance}/10</p>
-        </div>
-        <div className="rounded-lg bg-[hsl(var(--muted))] p-3">
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">Confidence</p>
-          <p className="mt-0.5 text-sm font-semibold">{Math.round(node.confidence * 100)}%</p>
-        </div>
+        ))}
       </div>
 
-      {/* Target & Dates */}
-      {node.targetDate && (
-        <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-          <Calendar className="h-3 w-3 shrink-0" />
-          <span>Target: {formatDate(node.targetDate)}</span>
+      {/* Dates */}
+      <div className="flex flex-col gap-2 mt-2 pl-4">
+        {node.targetDate && (
+          <div className="flex flex-col">
+            <span className="font-[family-name:var(--font-geist-mono)] text-[9px] uppercase text-[var(--ink-3)]">Target Date</span>
+            <span className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink)]">{formatDate(node.targetDate)}</span>
+          </div>
+        )}
+        <div className="flex flex-col">
+          <span className="font-[family-name:var(--font-geist-mono)] text-[9px] uppercase text-[var(--ink-3)]">Created</span>
+          <span className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink)]">{formatRelative(node.createdAt)}</span>
         </div>
-      )}
-      <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-        <Target className="h-3 w-3 shrink-0" />
-        <span>Created {formatRelative(node.createdAt)}</span>
-      </div>
-
-      {/* Status */}
-      <div className="rounded-lg border border-[hsl(var(--border))] p-3">
-        <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">Status</p>
-        <p className="text-sm capitalize font-medium">{node.status}</p>
       </div>
     </div>
   );
