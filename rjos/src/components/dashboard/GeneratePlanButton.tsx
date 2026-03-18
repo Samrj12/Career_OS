@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 
 export function GeneratePlanButton() {
@@ -25,9 +24,13 @@ export function GeneratePlanButton() {
   }
 
   return (
-    <Button size="sm" variant="outline" onClick={generate} disabled={loading} className="text-xs h-7">
-      <Sparkles className="h-3 w-3 mr-1" />
-      {loading ? "Generating…" : "Generate Plan"}
-    </Button>
+    <button
+      onClick={generate}
+      disabled={loading}
+      className="bg-[var(--ink)] text-[var(--paper)] hover:shadow-[2px_2px_0px_var(--border-dark)] disabled:opacity-50 disabled:cursor-not-allowed rounded-full px-4 py-1.5 font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-[0.08em] font-medium flex items-center gap-1.5 transition-all shadow-[3px_3px_0px_var(--border-dark)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-[1px_1px_0px_var(--border-dark)]"
+    >
+      <Sparkles className="h-3 w-3" />
+      {loading ? "GENERATING..." : "GENERATE PLAN"}
+    </button>
   );
 }
