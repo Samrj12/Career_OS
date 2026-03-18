@@ -1,13 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { VoiceInput } from "@/components/chat/VoiceInput";
-import { formatRelative } from "@/lib/utils/dates";
 import type { Node, ActivityLog } from "@/db/schema";
-import { Loader2, Send } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface Props {
   nodes: Node[];
@@ -49,7 +44,6 @@ export function ActivityLogClient({ nodes, recentActivities }: Props) {
       const data = await res.json();
       setResult(data.extraction);
 
-      // Auto-save if no follow-up questions
       if (!data.extraction.followUpQuestions?.length) {
         await saveActivity(data.extraction, data.nodeId);
         setSaved(true);
@@ -70,85 +64,121 @@ export function ActivityLogClient({ nodes, recentActivities }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Input */}
-      <Card>
-        <CardContent className="pt-4 space-y-3">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="e.g. Solved 2 graph problems on LeetCode today and spent 3 hours on my backend project"
-            rows={4}
-            className="w-full resize-none rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--ring))]"
-          />
-          <div className="flex gap-2">
-            <VoiceInput
-              onTranscript={(text) => setInput((prev) => prev + (prev ? " " : "") + text)}
-              disabled={isLoading}
-            />
-            <Button onClick={handleSubmit} disabled={isLoading || !input.trim()} className="ml-auto">
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {isLoading ? "Processing..." : "Log Activity"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      {/* Input card — thick amber top border, "FIELD REPORT" stamp */}
+      <div className="relative bg-[var(--paper)] border border-[var(--border)] border-t-[4px] border-t-[var(--amber)] rounded-[2px] shadow-[var(--shadow-card)] p-[20px]">
+        {/* Rubber stamp */}
+        <div className="absolute top-4 right-4 font-[family-name:var(--font-geist-mono)] text-[9px] uppercase tracking-[0.12em] text-[var(--ink)] opacity-[0.15] -rotate-[5deg] select-none pointer-events-none">
+          FIELD REPORT
+        </div>
 
-      {/* Result */}
+        <div className="mb-[6px]">
+          <label className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase text-[var(--ink-3)] tracking-[0.1em]">WHAT YOU DID</label>
+        </div>
+        {/* Textarea with ruled-paper lines */}
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="e.g. Solved 2 graph problems on LeetCode today and spent 3 hours on my backend project"
+          rows={4}
+          className="w-full bg-transparent border-0 rounded-[2px] p-[12px] font-[family-name:var(--font-inter)] text-[16px] text-[var(--ink)] outline-none focus:ring-0 resize-none"
+          style={{
+            backgroundImage: "repeating-linear-gradient(transparent, transparent 27px, var(--border) 27px, var(--border) 28px)",
+            backgroundSize: "100% 28px",
+            lineHeight: "28px",
+          }}
+        />
+        <div className="mt-[20px]">
+          {/* Eraser-shaped pill button */}
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading || !input.trim()}
+            className="w-full bg-[var(--ink)] text-[var(--paper)] rounded-full px-6 py-2.5 font-[family-name:var(--font-geist-mono)] text-[12px] uppercase tracking-[0.08em] shadow-[3px_3px_0px_var(--border-dark)] hover:shadow-[2px_2px_0px_var(--border-dark)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-[1px_1px_0px_var(--border-dark)] transition-all flex items-center justify-center disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {isLoading ? "PROCESSING..." : "LOG ENTRY"}
+          </button>
+        </div>
+      </div>
+
+      {/* Result — stamp receipt card */}
       {result && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Extracted</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <div className="bg-[var(--paper)] border border-dashed border-[var(--border-dark)] border-l-[3px] border-l-[var(--amber)] border-l-solid rounded-[2px] shadow-[var(--shadow-card)] p-[20px] pl-[16px] animate-stamp-in">
+          <div className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase text-[var(--amber)] mb-4 tracking-[0.1em]">
+            AI EXTRACTED
+          </div>
+          <div className="space-y-2">
             {result.nodeTitle && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[hsl(var(--muted-foreground))]">Node:</span>
-                <Badge variant="secondary">{result.nodeTitle}</Badge>
+              <div className="flex gap-4">
+                <span className="font-[family-name:var(--font-geist-mono)] text-[11px] text-[var(--ink-3)] w-24 uppercase">Node</span>
+                <span className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink)]">{result.nodeTitle}</span>
               </div>
             )}
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              {result.timeSpent && <div className="rounded bg-[hsl(var(--muted))] p-2 text-center"><div className="font-bold">{result.timeSpent}m</div><div className="text-[hsl(var(--muted-foreground))]">time</div></div>}
-              {result.difficulty && <div className="rounded bg-[hsl(var(--muted))] p-2 text-center"><div className="font-bold">{result.difficulty}/10</div><div className="text-[hsl(var(--muted-foreground))]">difficulty</div></div>}
-              {result.focusLevel && <div className="rounded bg-[hsl(var(--muted))] p-2 text-center"><div className="font-bold">{result.focusLevel}/10</div><div className="text-[hsl(var(--muted-foreground))]">focus</div></div>}
-            </div>
-            {result.summary && <p className="text-xs text-[hsl(var(--muted-foreground))]">{result.summary}</p>}
-            {result.followUpQuestions?.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium">Follow-up questions:</p>
-                {result.followUpQuestions.map((q, i) => (
-                  <p key={i} className="text-xs text-[hsl(var(--muted-foreground))]">• {q}</p>
-                ))}
+            {result.timeSpent && (
+              <div className="flex gap-4">
+                <span className="font-[family-name:var(--font-geist-mono)] text-[11px] text-[var(--ink-3)] w-24 uppercase">Time</span>
+                <span className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink)]">{result.timeSpent}m</span>
               </div>
             )}
-            {saved && <p className="text-xs text-green-400">✓ Activity saved and graph updated!</p>}
-            {error && <p className="text-xs text-red-400">{error}</p>}
-          </CardContent>
-        </Card>
+            {result.difficulty && (
+              <div className="flex gap-4">
+                <span className="font-[family-name:var(--font-geist-mono)] text-[11px] text-[var(--ink-3)] w-24 uppercase">Difficulty</span>
+                <span className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink)]">{result.difficulty}/10</span>
+              </div>
+            )}
+            {result.focusLevel && (
+              <div className="flex gap-4">
+                <span className="font-[family-name:var(--font-geist-mono)] text-[11px] text-[var(--ink-3)] w-24 uppercase">Focus</span>
+                <span className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink)]">{result.focusLevel}/10</span>
+              </div>
+            )}
+            {result.summary && (
+              <div className="flex gap-4">
+                <span className="font-[family-name:var(--font-geist-mono)] text-[11px] text-[var(--ink-3)] w-24 uppercase">Summary</span>
+                <span className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--ink)]">{result.summary}</span>
+              </div>
+            )}
+            {saved && (
+              <div className="mt-4 flex items-center gap-2">
+                <img
+                  src="/assets/stationary_elements/8dV3aCqzCVySc1GF1CYVK0gQcQI.png"
+                  alt=""
+                  className="w-[14px] h-[14px] animate-pin-drop"
+                />
+                <span className="font-[family-name:var(--font-inter)] text-[14px] text-[var(--green)]">Activity pinned to your graph!</span>
+              </div>
+            )}
+            {error && <div className="mt-4 font-[family-name:var(--font-inter)] text-[14px] text-[var(--red)]">{error}</div>}
+          </div>
+        </div>
       )}
 
-      {/* Recent */}
+      {/* Recent — thin paper strips with vertical dashed timeline */}
       {recentActivities.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="mt-[32px]">
+          <div className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase text-[var(--ink-3)] tracking-[0.1em] mb-4">
+            RECENT
+          </div>
+          <div className="relative pl-6">
+            {/* Vertical dashed timeline */}
+            <div className="absolute left-[7px] top-0 bottom-0 w-0 border-l-[2px] border-dashed border-[var(--border)]" />
+
             {recentActivities.map((a) => {
               const data: ExtractionResult = JSON.parse(a.extractedData || "{}");
+              const dateStr = new Date(a.loggedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
               return (
-                <div key={a.id} className="border-b border-[hsl(var(--border))] pb-2 last:border-0 last:pb-0">
-                  <p className="text-xs font-medium truncate">{data.summary || a.rawInput}</p>
-                  <div className="flex items-center gap-3 mt-0.5 text-[10px] text-[hsl(var(--muted-foreground))]">
-                    <span>{formatRelative(a.loggedAt)}</span>
-                    {a.timeSpent && <span>{a.timeSpent}min</span>}
-                    {data.nodeTitle && <span>{data.nodeTitle}</span>}
-                  </div>
+                <div key={a.id} className="flex items-center gap-4 py-[8px] relative">
+                  {/* Timeline dot */}
+                  <div className="absolute left-[-19px] w-[8px] h-[8px] rounded-full bg-[var(--border-dark)] border-2 border-[var(--paper)]" />
+                  {/* Time badge (eraser-shaped) */}
+                  <span className="font-[family-name:var(--font-geist-mono)] text-[10px] text-[var(--paper)] bg-[var(--ink-3)] px-2 py-0.5 rounded-full min-w-[50px] text-center uppercase">{dateStr}</span>
+                  <span className="font-[family-name:var(--font-inter)] text-[13px] text-[var(--ink)] truncate flex-1">{data.summary || a.rawInput}</span>
+                  <span className="font-[family-name:var(--font-geist-mono)] text-[10px] text-[var(--ink-3)] ml-auto">{a.timeSpent ? `${a.timeSpent}M` : ''}</span>
                 </div>
               );
             })}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
