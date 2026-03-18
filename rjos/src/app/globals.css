@@ -1,106 +1,150 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-  --radius: 0.5rem;
-  --chart-1: 12 76% 61%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
+  /* Paper surfaces */
+  --bg:           #F7F5F2;   /* warm cream */
+  --paper:        #FFFEF9;   /* paper white */
+  --paper-alt:    #F0EDE8;   /* kraft tone */
 
-  /* RJ-OS node colors */
-  --node-green: 142 71% 45%;
-  --node-yellow: 38 92% 50%;
-  --node-red: 0 84% 60%;
-  --node-blue: 217 91% 60%;
-}
+  /* Ink (text) */
+  --ink:          #1A1612;   /* warm charcoal */
+  --ink-2:        #5C544A;   /* secondary */
+  --ink-3:        #9C9488;   /* placeholder */
 
-.dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
-  --chart-1: 220 70% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  /* Accent */
+  --amber:        #E27A00;
+  --amber-light:  #FFF9F0;
+  --amber-border: #F3A953;
+
+  /* Borders */
+  --border:       #E0DCD5;   /* warm edge */
+  --border-dark:  #C8C2B8;
+
+  /* Pin palette */
+  --pin-blue:     #3B82F6;
+  --pin-orange:   #F97316;
+  --pin-purple:   #8B5CF6;
+
+  /* Status */
+  --green:        #0E793C;  --green-bg:  #ECFDF3;
+  --yellow:       #B46B00;  --yellow-bg: #FFFBEB;
+  --red:          #B91C1C;  --red-bg:    #FEF2F2;
+  --blue:         #1D4ED8;  --blue-bg:   #EFF6FF;
+
+  /* Shadows (135deg angle — down-right, matching stationery asset shadows) */
+  --shadow-card:       3px 3px 8px rgba(26, 22, 18, 0.08);
+  --shadow-card-hover: 4px 5px 14px rgba(26, 22, 18, 0.13);
+  --shadow-pin:        1px 2px 4px rgba(26, 22, 18, 0.25);
+
+  /* Radius */
+  --radius: 2px;
 }
 
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-chart-1: hsl(var(--chart-1));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-5: hsl(var(--chart-5));
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--paper);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--paper);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--amber);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--paper);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--paper-alt);
+  --color-muted-foreground: var(--ink-3);
+  --color-accent: var(--amber-light);
+  --color-accent-foreground: var(--ink);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--amber);
 }
 
 * {
-  border-color: hsl(var(--border));
+  border-color: var(--border);
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  background-image: url("/assets/bgs/i78F0DAmCwcWVgApHLnxkrPT9I.webp");
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  background-blend-mode: soft-light;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Keyframe Animations ────────────────────────────── */
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pinDrop {
+  0%   { transform: translateY(-20px) scale(0.5); opacity: 0; }
+  60%  { transform: translateY(3px) scale(1.05); opacity: 1; }
+  80%  { transform: translateY(-2px) scale(0.98); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes routeDraw {
+  from { stroke-dashoffset: 1000; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes stampIn {
+  0%   { transform: scale(1.4) rotate(-8deg); opacity: 0; }
+  50%  { transform: scale(0.95) rotate(1deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dashTravel {
+  to { stroke-dashoffset: -28; }
+}
+
+/* ─── Utility classes ────────────────────────────────── */
+
+.animate-pin-drop {
+  animation: pinDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-stamp-in {
+  animation: stampIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.3s ease-out forwards;
+}
+
+.animate-route-draw {
+  animation: routeDraw 1.5s ease-out forwards;
+}
+
+/* Paper texture on hover lift */
+.card-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Scrollbar styling */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
 }
